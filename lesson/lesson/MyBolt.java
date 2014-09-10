@@ -30,6 +30,7 @@ public class MyBolt implements IRichBolt {
 			if(valueString != null)
 			{
 				num ++ ;
+				//加线程号来区分分组策略
 				System.err.println(Thread.currentThread().getName()+"	lines  :"+num +"   session_id:"+valueString.split("\t")[1]);
 			}
 			collector.ack(input);
