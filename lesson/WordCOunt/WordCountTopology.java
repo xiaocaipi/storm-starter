@@ -1,4 +1,5 @@
-package storm.starter;
+package WordCOunt;
+
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -21,23 +22,6 @@ import java.util.Map;
  * This topology demonstrates Storm's stream groupings and multilang capabilities.
  */
 public class WordCountTopology {
-	//继承的是ShellBolt  以shell开头的都是其它语言，这里用的是python
-  public static class SplitSentence extends ShellBolt implements IRichBolt {
-
-    public SplitSentence() {
-      super("python", "splitsentence.py");
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-      declarer.declare(new Fields("word"));
-    }
-
-    @Override
-    public Map<String, Object> getComponentConfiguration() {
-      return null;
-    }
-  }
 
   public static class WordCount extends BaseBasicBolt {
     Map<String, Integer> counts = new HashMap<String, Integer>();
@@ -50,6 +34,7 @@ public class WordCountTopology {
         count = 0;
       count++;
       counts.put(word, count);
+      System.err.println(Thread.currentThread().getName()+"     word="+word+"; count="+count);
       collector.emit(new Values(word, count));
     }
 
@@ -62,12 +47,13 @@ public class WordCountTopology {
   public static void main(String[] args) throws Exception {
 
     TopologyBuilder builder = new TopologyBuilder();
-    //一个spout来制造数据
-    builder.setSpout("spout", new RandomSentenceSpout(), 5);
-    //用2个bolt 第一个是shufflegrouping，第一个做了预处理
-    builder.setBolt("split", new SplitSentence(), 8).shuffleGrouping("spout");
-    //，第二个用fieldsGrouping，这个必须指明是哪一个field，这个field是在上一个的bolt 的输出格式中定义
+
+    builder.setSpout("spout", new MyRandomSentenceSpout(), 1);
+    //MySplit 是个工具类的bolt 开多少个线程都无所谓的
+    builder.setBolt("split", new MySplit(" "), 8).shuffleGrouping("spout");
+    
     builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
+//    builder.setBolt("count", new WordCount(), 12).shuffleGrouping("split");
 
     Config conf = new Config();
     conf.setDebug(true);
@@ -84,9 +70,9 @@ public class WordCountTopology {
       LocalCluster cluster = new LocalCluster();
       cluster.submitTopology("word-count", conf, builder.createTopology());
 
-      Thread.sleep(10000);
-
-      cluster.shutdown();
+//      Thread.sleep(10000);
+//
+//      cluster.shutdown();
     }
   }
 }

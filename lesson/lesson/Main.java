@@ -32,8 +32,14 @@ public class Main {
 		//noneGrouping  演示
 //		builder.setBolt("bolt", new MyBolt(), 2).noneGrouping("spout");
 		
-		//noneGrouping  演示  需要执行fields，这里的field 是上一个spout 发送出来定义的格式
-		builder.setBolt("bolt", new MyBolt(), 2).fieldsGrouping("spout",new Fields("log"));
+		//fieldsGrouping  演示  需要执行fields，这里的field 是上一个spout 发送出来定义的格式
+//		builder.setBolt("bolt", new MyBolt(), 2).fieldsGrouping("spout",new Fields("log"));
+		
+		//allGrouping  演示   2个bolt 都会收到所有的tuple
+//		builder.setBolt("bolt", new MyBolt(), 2).allGrouping("spout");
+		
+		//globalGrouping  演示    分配id最低值的那个task
+		builder.setBolt("bolt", new MyBolt(), 2).globalGrouping("spout");
 
 		Map conf = new HashMap();
 		conf.put(Config.TOPOLOGY_WORKERS, 4);
