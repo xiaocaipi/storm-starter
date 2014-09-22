@@ -1,67 +1,55 @@
-package WordCOunt;
+package user_visit;
 
-
+import java.util.HashMap;
 import java.util.Map;
-
-import com.sun.java_cup.internal.runtime.virtual_parse_stack;
 
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
-import backtype.storm.topology.FailedException;
 import backtype.storm.topology.IBasicBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
-public class MySplit implements IBasicBolt {
+public class DeepVisitBolt implements IBasicBolt{
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	String patton ;
-	public MySplit(String patton)
-	{
-		this.patton = patton;
-	}
-	
 	@Override
 	public void cleanup() {
 		// TODO Auto-generated method stub
-
+		
 	}
-
+	Map<String, Integer> counts = new HashMap<String, Integer>();
 	@Override
 	public void execute(Tuple input, BasicOutputCollector collector) {
 		// TODO Auto-generated method stub
-		try {
-			String sen = input.getString(0);
-			if(sen != null)
-			{
-				for(String word : sen.split(patton))
-				{
-					collector.emit(new Values(word));
-				}
-			}
-			//这里集成的是IBasicBolt 没有ack 和fail 自动是ack 如果要异常就捕获FailedException 然后抛出，storm知道会自动去掉
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new FailedException("split fail");
+		String dateString = input.getStringByField("date");
+		String session_id = input.getStringByField("session_id");
+		//
+		Integer count = counts.get(dateString+"_"+session_id);
+		if (count == null) {
+			count = 0;
 		}
+		count ++ ;
+		
+		counts.put(dateString+"_"+session_id,count) ;
+		collector.emit(new Values(dateString+"_"+session_id,count)) ;
 	}
 
 	@Override
 	public void prepare(Map stormConf, TopologyContext context) {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("word"));
 		// TODO Auto-generated method stub
+		declarer.declare(new Fields("date_session_id","count"));
 	}
 
 	@Override

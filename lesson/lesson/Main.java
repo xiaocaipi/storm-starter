@@ -39,7 +39,10 @@ public class Main {
 //		builder.setBolt("bolt", new MyBolt(), 2).allGrouping("spout");
 		
 		//globalGrouping  演示    分配id最低值的那个task
-		builder.setBolt("bolt", new MyBolt(), 2).globalGrouping("spout");
+//		builder.setBolt("bolt", new MyBolt(), 2).globalGrouping("spout");
+		
+//		设置task数
+		builder.setBolt("bolt", new MyBolt(), 1).setNumTasks(4).globalGrouping("spout");
 
 		Map conf = new HashMap();
 		conf.put(Config.TOPOLOGY_WORKERS, 4);

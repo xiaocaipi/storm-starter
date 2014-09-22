@@ -21,6 +21,9 @@ import java.util.Map;
 /**
  * This topology demonstrates Storm's stream groupings and multilang capabilities.
  */
+//修改的例子会一直运行。
+//WordCount 这个bolt开多线程每个线程emit一下   SumBolt 这个bolt只有一个线程就会统计一下，这里算的是单词的pv 和uv ，sumbolt其实就对map 的key和value做循环统计
+//因为用的是fieldgroup 所以 就比如单词 a 第一次的时候 WordCount bolt 输出 a 1  sumbolt会进行统计，第二次a来的的时候还是会分配到这个线程上，所以a能加上去
 public class WordCountTopology {
 
   public static class WordCount extends BaseBasicBolt {
@@ -54,7 +57,8 @@ public class WordCountTopology {
     
     builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
 //    builder.setBolt("count", new WordCount(), 12).shuffleGrouping("split");
-
+    //再写一个bolt单线程来对上一个分布式的进行汇总，相当于reduce
+    builder.setBolt("sum", new SumBolt() ,1 ).shuffleGrouping("count");
     Config conf = new Config();
     conf.setDebug(true);
 
