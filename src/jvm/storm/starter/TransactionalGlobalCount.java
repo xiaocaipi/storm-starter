@@ -26,6 +26,7 @@ import java.util.Map;
  * database. The source of data and the databases are mocked out as in memory maps for demonstration purposes. This
  * class is defined in depth on the wiki at https://github.com/nathanmarz/storm/wiki/Transactional-topologies
  */
+//进行全局汇总
 public class TransactionalGlobalCount {
   public static final int PARTITION_TAKE_PER_BATCH = 3;
   public static final Map<Integer, List<List<Object>>> DATA = new HashMap<Integer, List<List<Object>>>() {{
@@ -83,6 +84,7 @@ public class TransactionalGlobalCount {
 
     @Override
     public void finishBatch() {
+    	//发送事务的id，事务的行数
       _collector.emit(new Values(_id, _count));
     }
 
@@ -91,7 +93,7 @@ public class TransactionalGlobalCount {
       declarer.declare(new Fields("id", "count"));
     }
   }
-
+  //这个是committer 也会把每一个结果做累加，在finishbatch 做一个写库，这里的数据库用一个map来模拟的
   public static class UpdateGlobalCount extends BaseTransactionalBolt implements ICommitter {
     TransactionAttempt _attempt;
     BatchOutputCollector _collector;
@@ -135,10 +137,12 @@ public class TransactionalGlobalCount {
       declarer.declare(new Fields("id", "sum"));
     }
   }
-
+  //spout 是事务处理中最重要的环节
   public static void main(String[] args) throws Exception {
+	  //第一个参数data 这里模拟了3个分区，每一个分区就是一个list，第二个是输出的字段，第三个是分区的个数
     MemoryTransactionalSpout spout = new MemoryTransactionalSpout(DATA, new Fields("word"), PARTITION_TAKE_PER_BATCH);
     TransactionalTopologyBuilder builder = new TransactionalTopologyBuilder("global-count", "spout", spout, 3);
+    //bolt 是很简单的，这里就做一个累加
     builder.setBolt("partial-count", new BatchCount(), 5).noneGrouping("spout");
     builder.setBolt("sum", new UpdateGlobalCount()).globalGrouping("partial-count");
 

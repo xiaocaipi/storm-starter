@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/project/!svn/ver/172/storm-starter-lesson/lesson/transaction1/daily/partition/Opaque
+END
+MyDailyTopo.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/project/!svn/ver/172/storm-starter-lesson/lesson/transaction1/daily/partition/Opaque/MyDailyTopo.java
+END
+MyDailyBatchBolt.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svn/project/!svn/ver/172/storm-starter-lesson/lesson/transaction1/daily/partition/Opaque/MyDailyBatchBolt.java
+END
+MyOpaquePtTxSpout.java
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/project/!svn/ver/172/storm-starter-lesson/lesson/transaction1/daily/partition/Opaque/MyOpaquePtTxSpout.java
+END
+MyDailyCommitterBolt.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/svn/project/!svn/ver/172/storm-starter-lesson/lesson/transaction1/daily/partition/Opaque/MyDailyCommitterBolt.java
+END
