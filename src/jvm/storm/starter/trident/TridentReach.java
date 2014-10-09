@@ -21,8 +21,9 @@ import storm.trident.state.map.ReadOnlyMapState;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.*;
-
+//作用是twitter 访问2个库一个是TWEETERS_DB   FOLLOWERS_DB
 public class TridentReach {
+	//用map 模拟的数据库
   public static Map<String, List<String>> TWEETERS_DB = new HashMap<String, List<String>>() {{
     put("foo.com/blog/1", Arrays.asList("sally", "bob", "tim", "george", "nathan"));
     put("engineering.twitter.com/blog/5", Arrays.asList("adam", "david", "sally", "nathan"));
@@ -105,11 +106,18 @@ public class TridentReach {
   }
 
   public static StormTopology buildTopology(LocalDRPC drpc) {
+	  // 首先定义一个TridentTopology 
     TridentTopology topology = new TridentTopology();
+    //在TridentTopology 定义2个TridentState  一个是urlToTweeters  url 和tweeter的关系表 数据源是TWEETERS_DB  一个url 有很多tweeter
     TridentState urlToTweeters = topology.newStaticState(new StaticSingleKeyMapState.Factory(TWEETERS_DB));
+    //第二个是tweetersToFollowers 人和关注着
     TridentState tweetersToFollowers = topology.newStaticState(new StaticSingleKeyMapState.Factory(FOLLOWERS_DB));
 
-
+    //生成drpc的数据流  定义一个函数reach ，进行查询 从 urlToTweeters 进行查询，根据输入的参数  得到tweeters  输入的参数 url 下面的aaa foo.com/blog/1等
+    //在每一个tweeters  tweeters 一行是多个的 然后进行ExpandList 打散成一个 生成的字段是tweeter  然后进行shuffle  的作用是进行重新分区
+    //然后对每一个tweeter 进行输入 再查询 tweetersToFollowers 里面查  生成字段followers
+    //对followers 每一行再打散  成follower  对follower groupby  之后再进行聚合，聚合函数的输入 是follower，输出是个one  new one() 是对每一个follower 返回1 最后sum一下就知道有多少个follower
+    //这样就可以传入一个url 就知道有多少个follower
     topology.newDRPCStream("reach", drpc).stateQuery(urlToTweeters, new Fields("args"), new MapGet(), new Fields(
         "tweeters")).each(new Fields("tweeters"), new ExpandList(), new Fields("tweeter")).shuffle().stateQuery(
         tweetersToFollowers, new Fields("tweeter"), new MapGet(), new Fields("followers")).each(new Fields("followers"),
@@ -127,7 +135,7 @@ public class TridentReach {
     cluster.submitTopology("reach", conf, buildTopology(drpc));
 
     Thread.sleep(2000);
-
+    //trident 很多时候用drpc的方式， 这里是输出客户端drpc的查询
     System.out.println("REACH: " + drpc.execute("reach", "aaa"));
     System.out.println("REACH: " + drpc.execute("reach", "foo.com/blog/1"));
     System.out.println("REACH: " + drpc.execute("reach", "engineering.twitter.com/blog/5"));
